@@ -1,0 +1,9 @@
+node_modules/
+src/
+public/
+desktop/
+.git/
+*.exe
+*.mp4
+*.webm
+.env
