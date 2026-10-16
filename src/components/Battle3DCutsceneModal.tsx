@@ -597,7 +597,7 @@ export const Battle3DCutsceneModal: React.FC<Battle3DCutsceneModalProps> = ({
           ) : (
             <span className="px-3 py-1 rounded bg-gradient-to-r from-[#7a1119] to-[#3d070b] border border-[#ff6b78] text-[#ffe0e3] font-cinzel font-black text-xs tracking-widest flex items-center gap-1.5 shadow-lg">
               <Skull className="w-3.5 h-3.5 text-[#ff7a85]" />
-              REVIEWER 2 ULTIMATE EXECUTION // 붉은 잉크의 심판
+              REVIEWER 2 ULTIMATE EXECUTION // CRIMSON INK VERDICT
             </span>
           )}
           <span className="text-sm md:text-base font-serif font-black text-[#f5ebd6] tracking-wide">
@@ -614,7 +614,7 @@ export const Battle3DCutsceneModal: React.FC<Battle3DCutsceneModalProps> = ({
           className="px-3 py-1 rounded bg-[#1c1611]/90 hover:bg-[#2e241b] border border-[#8a6d3b] text-[#e6d5b8] text-xs font-serif font-bold flex items-center gap-1.5 cursor-pointer"
         >
           <FastForward className="w-3.5 h-3.5 text-[#d4a857]" />
-          <span>스킵 (SPACE / 클릭)</span>
+          <span>SKIP (SPACE / CLICK)</span>
         </button>
       </div>
 

@@ -232,7 +232,7 @@ export function App() {
 
         appendLog(
           'REVIEWER_2',
-          `Reviewer 2: ${attack.koreanTitle}`,
+          `Reviewer 2: ${attack.title}`,
           attack.reviewerDialogue,
           attack.verbatimQuote
         );
@@ -324,7 +324,7 @@ export function App() {
         spawnFloatingText(`-${dmg}`, 'PLAYER', 'CRIMSON', reason);
       } else {
         soundEngine.playShieldGain();
-        spawnFloatingText('방어', 'PLAYER', 'CYAN', reason);
+        spawnFloatingText('BLOCKED', 'PLAYER', 'CYAN', reason);
       }
 
       if (nextSanity <= 0) {
@@ -367,7 +367,7 @@ export function App() {
     );
     const orb: LoadedEvidence = {
       cardId: `drag-${Date.now()}`,
-      cardName: `${location} 드래그 인용`,
+      cardName: `${location} Dragged Citation`,
       quote,
       location,
       strongAgainst: inferredCategories,
@@ -376,10 +376,10 @@ export function App() {
     setLoadedEvidence(orb);
     soundEngine.playVerifiedLock();
     spawnFloatingText(
-      `레퍼런스 장착 (${location})`,
+      `Reference Attached (${location})`,
       'PLAYER',
       matchesWeakness ? 'GOLD' : 'CYAN',
-      '논문 드래그 인용'
+      'Manuscript Drag Citation'
     );
   };
 
@@ -401,25 +401,25 @@ export function App() {
     if (card.selfSanityCost && card.selfSanityCost > 0) {
       nextSanity = Math.max(1, nextSanity - card.selfSanityCost);
       setPlayerHitTrigger((c) => c + 1);
-      spawnFloatingText(`-${card.selfSanityCost} 멘탈`, 'PLAYER', 'VIOLET', card.koreanName);
+      spawnFloatingText(`-${card.selfSanityCost} SANITY`, 'PLAYER', 'VIOLET', card.name);
     }
 
     if (card.healSanity && card.healSanity > 0) {
       nextSanity = Math.min(playerMaxSanity, nextSanity + card.healSanity);
-      spawnFloatingText(`+${card.healSanity} 멘탈 회복`, 'PLAYER', 'EMERALD', card.koreanName);
+      spawnFloatingText(`+${card.healSanity} SANITY`, 'PLAYER', 'EMERALD', card.name);
     }
 
     if (card.blockGain && card.blockGain > 0) {
       soundEngine.playShieldGain();
-      spawnFloatingText(`+${card.blockGain} 방어`, 'PLAYER', 'CYAN', card.koreanName);
+      spawnFloatingText(`+${card.blockGain} BLOCK`, 'PLAYER', 'CYAN', card.name);
     }
 
     if (card.reduceBossAttackFlat && card.reduceBossAttackFlat > 0) {
       spawnFloatingText(
-        `공격력 -${card.reduceBossAttackFlat}`,
+        `ATK -${card.reduceBossAttackFlat}`,
         'BOSS',
         'CYAN',
-        card.koreanName
+        card.name
       );
     }
 
@@ -430,10 +430,10 @@ export function App() {
       );
       setRebuttalPowerMultiplier(nextMultiplier);
       spawnFloatingText(
-        `반박 위력 ${nextMultiplier.toFixed(1)}x!`,
+        `Rebuttal Power ${nextMultiplier.toFixed(1)}x!`,
         'PLAYER',
         'GOLD',
-        card.koreanName
+        card.name
       );
     }
 
@@ -442,12 +442,12 @@ export function App() {
       setBossBlock(0);
       setIsBossLogicBroken(true);
       soundEngine.playCriticalAttack();
-      spawnFloatingText('방어막 완전 파괴!', 'BOSS', 'GOLD', card.koreanName);
+      spawnFloatingText('SHIELD SHATTERED!', 'BOSS', 'GOLD', card.name);
       void play3DCutsceneAndWait({
         type: 'PLAYER_CRITICAL',
-        title: `${card.koreanName} — 방어막 박살!`,
+        title: `${card.name} — Logic Barrier Shattered!`,
         subtitle: 'CRITICAL SHIELD SHATTER // PEER REVIEW OVERRIDE',
-        quoteOrDialogue: card.flavorQuote || card.description.replace('\n', ' '),
+        quoteOrDialogue: card.manuscriptQuote || card.description.replace('\n', ' '),
         damage: card.rebuttalDamage || 25,
         rank: 'S',
       });
@@ -470,10 +470,10 @@ export function App() {
         };
         setLoadedEvidence(orb);
         spawnFloatingText(
-          `핵심 원문 첨부 (${bestSnippet.location})`,
+          `Key Citation Attached (${bestSnippet.location})`,
           'PLAYER',
           'GOLD',
-          card.koreanName
+          card.name
         );
       }
     }
@@ -482,10 +482,10 @@ export function App() {
       const res = applyDamageToBoss(card.rebuttalDamage, nextBossBlock, nextBossHp);
       nextBossBlock = res.remainingBlock;
       nextBossHp = res.nextHp;
-      spawnFloatingText(`-${card.rebuttalDamage}`, 'BOSS', 'CRIMSON', card.koreanName);
+      spawnFloatingText(`-${card.rebuttalDamage}`, 'BOSS', 'CRIMSON', card.name);
     }
 
-    appendLog('PLAYER', `사건 카드 발동: ${card.koreanName}`, card.description.replace('\n', ' '));
+    appendLog('PLAYER', `Event Card Played: ${card.name}`, card.description.replace('\n', ' '));
 
     const remainingHand = hand.filter((c) => c.instanceId !== card.instanceId);
     let nextDiscard = discardPile;
@@ -536,12 +536,12 @@ export function App() {
         // Play 3D Boss Ultimate Cutscene on F-rank rejection
         await play3DCutsceneAndWait({
           type: 'BOSS_ULTIMATE',
-          title: currentAttack?.koreanTitle || '심사위원 2호의 기각 철퇴',
+          title: currentAttack?.title || 'Reviewer 2: Summary Rejection Gavel',
           subtitle: 'BOSS ULTIMATE // REJECT WITHOUT MERCY',
           quoteOrDialogue:
-            result.reviewer2Counter ||
-            currentAttack?.koreanDialogue ||
-            '이 따위 변명으로 학계를 속이려 들다니, 즉시 리젝(Reject)이다!',
+            result.reviewerReaction ||
+            currentAttack?.reviewerDialogue ||
+            'How dare you insult the program committee with such flimsy excuses! Immediate REJECT!',
           damage: pen + rawIncoming,
           rank: 'F',
         });
@@ -555,13 +555,13 @@ export function App() {
           pen,
           currentBlock,
           currentSanity,
-          '논리 기각 역공'
+          'Rejected Rebuttal Backfire'
         );
         currentBlock = penRes.nextBlock;
         currentSanity = penRes.nextSanity;
         appendLog(
           'REVIEWER_2',
-          `반박 기각 (등급 F / -${pen})`,
+          `Rebuttal Rejected (Rank F / -${pen})`,
           `"${submittedText}" — ${result.logicFeedback}`
         );
         if (currentSanity <= 0) {
@@ -581,8 +581,8 @@ export function App() {
             type: 'PLAYER_CRITICAL',
             title:
               result.rank === 'S'
-                ? '무결점 논파 — 심사위원 침묵!'
-                : '결정적 반박 — 논리 장벽 파쇄!',
+                ? 'Flawless Refutation — Reviewer Silenced!'
+                : 'Decisive Counter-Rebuttal — Logic Barrier Crushed!',
             subtitle: `CRITICAL REBUTTAL // RANK ${result.rank} VERIFIED`,
             quoteOrDialogue: submittedText,
             damage: boostedDmg,
@@ -620,12 +620,12 @@ export function App() {
           `-${boostedDmg}`,
           'BOSS',
           'GOLD',
-          `논리 반박 [등급 ${result.rank}]`
+          `Logical Rebuttal [Rank ${result.rank}]`
         );
 
         appendLog(
           'PLAYER',
-          `자연어 반박 적중 (등급 ${result.rank} / -${boostedDmg})`,
+          `Freeform Rebuttal Hit (Rank ${result.rank} / -${boostedDmg})`,
           `"${submittedText}" — ${result.logicFeedback}`,
           loadedEvidence?.quote || currentAttack?.verbatimQuote,
           true
@@ -646,7 +646,7 @@ export function App() {
           pen,
           currentBlock,
           currentSanity,
-          curse.koreanName
+          curse.name
         );
         currentBlock = res.nextBlock;
         currentSanity = res.nextSanity;
@@ -663,10 +663,10 @@ export function App() {
       if (isFullParry && result.rank !== 'F') {
         soundEngine.playShieldGain();
         spawnFloatingText(
-          '논파 성공! (공격 무효화)',
+          'REFUTED! (Attack Nullified)',
           'PLAYER',
           'EMERALD',
-          '다음 질문으로 이동'
+          'Advancing to Next Question'
         );
       } else {
         setBossAttackTrigger((c) => c + 1);
@@ -682,7 +682,7 @@ export function App() {
           incomingDmg,
           currentBlock,
           currentSanity,
-          currentAttack?.koreanTitle || 'Reviewer 2 반격'
+          currentAttack?.title || 'Reviewer 2 Counterattack'
         );
         unblockedDamage = hitRes.unblockedDamage;
         if (hitRes.nextSanity <= 0) {
@@ -698,10 +698,10 @@ export function App() {
         const curseCard = createRedInkCurseCard();
         nextDiscardPile.push(curseCard);
         spawnFloatingText(
-          '+트라우마 카드 추가',
+          '+Trauma Curse Added',
           'PLAYER',
           'VIOLET',
-          '버린 덱에 추가됨'
+          'Added to Discard Pile'
         );
       }
 
@@ -768,14 +768,14 @@ export function App() {
           pen,
           currentBlock,
           currentSanity,
-          curse.koreanName
+          curse.name
         );
         currentBlock = res.nextBlock;
         currentSanity = res.nextSanity;
         appendLog(
           'REVIEWER_2',
-          `${curse.koreanName} (-${pen})`,
-          '손에 남은 트라우마 카드가 멘탈을 깎았습니다.'
+          `${curse.name} (-${pen})`,
+          'Unplayed trauma curse in hand drained your sanity.'
         );
       }
 
@@ -791,15 +791,16 @@ export function App() {
       if (
         incomingDmg >= 18 ||
         currentAttack?.debuffType === 'RED_INK_BLEED' ||
-        currentAttack?.debuffType === 'CONFUSION'
+        currentAttack?.debuffType === 'IMPOSTOR_SYNDROME' ||
+        currentAttack?.debuffType === 'DEADLINE_PANIC'
       ) {
         await play3DCutsceneAndWait({
           type: 'BOSS_ULTIMATE',
-          title: currentAttack?.koreanTitle || '심사위원 2호의 붉은 잉크 처형',
+          title: currentAttack?.title || 'Reviewer 2: Red Ink Execution',
           subtitle: 'BOSS ULTIMATE // UNANSWERED CRITIQUE',
           quoteOrDialogue:
-            currentAttack?.koreanDialogue ||
-            '반박조차 하지 못하다니! 네 원고에 붉은 리젝 도장을 찍어주마!',
+            currentAttack?.reviewerDialogue ||
+            'You could not even muster a rebuttal! I shall stamp a crimson REJECT across your manuscript!',
           damage: incomingDmg,
         });
       }
@@ -811,7 +812,7 @@ export function App() {
         incomingDmg,
         currentBlock,
         currentSanity,
-        currentAttack?.koreanTitle || 'Reviewer 2 공격'
+        currentAttack?.title || 'Reviewer 2 Attack'
       );
 
       if (hitRes.nextSanity <= 0) {
@@ -823,10 +824,10 @@ export function App() {
         const curseCard = createRedInkCurseCard();
         nextDiscardPile.push(curseCard);
         spawnFloatingText(
-          '+트라우마 카드 추가',
+          '+Trauma Curse Added',
           'PLAYER',
           'VIOLET',
-          '버린 덱에 추가됨'
+          'Added to Discard Pile'
         );
       }
 
@@ -907,38 +908,38 @@ export function App() {
             onClick={() =>
               void play3DCutsceneAndWait({
                 type: 'PLAYER_CRITICAL',
-                title: '무결점 논파 — 심사위원 침묵!',
+                title: 'Flawless Refutation — Reviewer Silenced!',
                 subtitle: 'CRITICAL REBUTTAL // RANK S VERIFIED',
                 quoteOrDialogue:
                   loadedEvidence?.quote ||
-                  'Section 4.3의 Ablation 표에서 p < 0.001 유의성으로 이미 완벽히 증명되었습니다!',
+                  'Already rigorously proven with p < 0.001 significance in the Section 4.3 ablation table!',
                 damage: 48,
                 rank: 'S',
               })
             }
             className="px-2.5 py-1 rounded bg-[#2b200d] hover:bg-[#3d2d12] border border-[#d4af37] text-[#ffe28a] text-xs font-bold flex items-center gap-1 cursor-pointer transition"
-            title="3D 치명타 전투신 즉시 감상"
+            title="Preview 3D Critical Rebuttal Cutscene"
           >
-            <span>⚡ 3D 치명타</span>
+            <span>⚡ 3D Crit</span>
           </button>
 
           <button
             onClick={() =>
               void play3DCutsceneAndWait({
                 type: 'BOSS_ULTIMATE',
-                title: currentAttack?.koreanTitle || '심사위원 2호의 붉은 잉크 처형',
+                title: currentAttack?.title || 'Reviewer 2: Red Ink Execution',
                 subtitle: 'BOSS ULTIMATE // REJECT WITHOUT MERCY',
                 quoteOrDialogue:
-                  currentAttack?.koreanDialogue ||
-                  '이 논문은 학계의 시간 낭비다! 전면 재실험 없이는 절대 통과시킬 수 없다!',
+                  currentAttack?.reviewerDialogue ||
+                  'This manuscript is a waste of the committee’s time! Unacceptable without a complete experimental overhaul!',
                 damage: 32,
                 rank: 'F',
               })
             }
             className="px-2.5 py-1 rounded bg-[#2b1010] hover:bg-[#401616] border border-[#b83b3b] text-[#ff9e9e] text-xs font-bold flex items-center gap-1 cursor-pointer transition"
-            title="보스 3D 필살기 전투신 즉시 감상"
+            title="Preview Boss 3D Ultimate Cutscene"
           >
-            <span>💀 3D 필살기</span>
+            <span>💀 3D Ultimate</span>
           </button>
 
           <button
@@ -946,20 +947,20 @@ export function App() {
             className="px-3 py-1 rounded bg-[#241d16] hover:bg-[#33291f] border border-[#8c6d3f] text-[#f5ebd9] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"
           >
             <BookOpen className="w-3.5 h-3.5 text-[#c89d54]" />
-            <span>논문 원문 (드래그 인용)</span>
+            <span>Manuscript (Drag to Cite)</span>
           </button>
 
           <button
             onClick={() => setIsCombatLogOpen((v) => !v)}
             className="px-3 py-1 rounded bg-[#1c1712] hover:bg-[#29221a] border border-[#54432b] text-[#d6c7b2] text-xs font-semibold cursor-pointer transition"
           >
-            <span>심사 기록</span>
+            <span>Review Log</span>
           </button>
 
           <button
             onClick={() => setIsMuted((m) => !m)}
             className="p-1.5 rounded bg-[#1c1712] hover:bg-[#29221a] text-[#d6c7b2] border border-[#54432b] cursor-pointer transition"
-            title="음소거 전환"
+            title="Toggle Mute"
           >
             {isMuted ? (
               <VolumeX className="w-4 h-4 text-[#d96b6b]" />
@@ -971,10 +972,10 @@ export function App() {
           <button
             onClick={() => setPhase('LOBBY')}
             className="px-2.5 py-1 rounded bg-[#1c1712] hover:bg-[#331818] border border-[#54432b] text-[#bfb099] hover:text-[#f2c6c6] text-xs font-semibold flex items-center gap-1 cursor-pointer transition"
-            title="타이틀 화면으로"
+            title="Return to Title Screen"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">원고 변경</span>
+            <span className="hidden md:inline">Change Paper</span>
           </button>
         </div>
       </header>
@@ -983,12 +984,12 @@ export function App() {
       {isCombatLogOpen && (
         <div className="absolute top-13 right-4 z-40 w-80 max-h-80 overflow-y-auto rounded-lg bg-[#14110e]/98 border-2 border-[#785c32] p-3.5 shadow-2xl">
           <div className="text-xs font-bold text-[#e6c280] mb-2.5 pb-1.5 border-b border-[#54432b] flex items-center justify-between">
-            <span>심사 공방 기록</span>
+            <span>Peer Review Combat Log</span>
             <button
               onClick={() => setIsCombatLogOpen(false)}
               className="text-[#a89882] hover:text-white text-xs cursor-pointer"
             >
-              닫기
+              Close
             </button>
           </div>
           <div className="space-y-2">
@@ -998,7 +999,7 @@ export function App() {
                 className="p-2 rounded bg-[#0c0a08] border border-[#3d3122] text-[11px]"
               >
                 <div className="font-bold text-[#e6c280]">
-                  [제{entry.turn}턴] {entry.title}
+                  [Turn {entry.turn}] {entry.title}
                 </div>
                 <div className="text-[#d6c7b2] mt-0.5 leading-relaxed">
                   {entry.detail}

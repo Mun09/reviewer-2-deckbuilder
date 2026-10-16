@@ -527,7 +527,7 @@ export const Boss3DStage: React.FC<Boss3DStageProps> = ({
           {currentAttack && (
             <div
               className="mb-1 shrink-0 flex items-center gap-1.5 px-3.5 py-1 rounded bg-[#1f1212]/95 border-2 border-[#a83232] shadow-[0_6px_18px_rgba(0,0,0,0.9)]"
-              title={currentAttack.koreanTitle}
+              title={currentAttack.title}
             >
               <Swords className="w-4 h-4 text-[#e05252]" />
               <span className="font-cinzel font-black text-base text-[#f5ebd9]">

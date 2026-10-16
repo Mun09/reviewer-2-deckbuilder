@@ -45,8 +45,8 @@ namespace Reviewer2Desktop
                 if (_memoryFiles.Count == 0 && _fallbackDistRoot == null)
                 {
                     MessageBox.Show(
-                        "게임 리소스를 불러올 수 없습니다.",
-                        "REVIEWER 2 실행 오류",
+                        "Failed to load game resources.",
+                        "REVIEWER 2 Launch Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error
                     );
@@ -98,7 +98,7 @@ namespace Reviewer2Desktop
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "실행 중 오류가 발생했습니다:\n" + ex.Message,
+                    "An error occurred during execution:\n" + ex.Message,
                     "REVIEWER 2",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
