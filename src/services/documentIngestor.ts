@@ -1,9 +1,10 @@
 import { DocumentSection, DocumentSource } from '../types/game';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Configure PDF.js worker using CDN fallback matching installed version
+// Configure PDF.js worker using same-origin bundled Vite asset
 try {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 } catch {
   // Fallback handled gracefully if worker fails
 }
@@ -16,8 +17,21 @@ export async function parseUploadedPdfFile(file: File): Promise<DocumentSource> 
   const arrayBuffer = await file.arrayBuffer();
 
   try {
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
+    let pdf: pdfjsLib.PDFDocumentProxy;
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
+      pdf = await loadingTask.promise;
+    } catch {
+      // Fallback: disable worker if browser restricts worker threads
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      const fallbackTask = pdfjsLib.getDocument({
+        data: arrayBuffer.slice(0),
+        useSystemFonts: true,
+        isEvalSupported: false,
+      });
+      pdf = await fallbackTask.promise;
+    }
+
     const sections: DocumentSection[] = [];
     const fullTextParts: string[] = [];
 
@@ -25,13 +39,25 @@ export async function parseUploadedPdfFile(file: File): Promise<DocumentSource> 
     for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ')
-        .replace(/\s+/g, ' ')
+      const rawChunks: string[] = [];
+      for (const item of textContent.items) {
+        if ('str' in item) {
+          rawChunks.push(item.str);
+          if ('hasEOL' in item && item.hasEOL) {
+            rawChunks.push('\n');
+          } else {
+            rawChunks.push(' ');
+          }
+        }
+      }
+      const pageText = rawChunks
+        .join('')
+        .replace(/-\s*\n\s*([a-z])/g, '$1') // Rejoin hyphenated PDF line wraps
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{2,}/g, '\n')
         .trim();
 
-      if (pageText.length > 20) {
+      if (pageText.length > 10) {
         // Detect a likely section heading on this page
         const headingMatch = pageText.match(
           /\b(\d+(?:\.\d+)?\s+[A-Z][A-Za-z0-9\s\-:]{3,42}|Abstract|Introduction|Related Work|Method|Methodology|Experiments|Evaluation|Results|Discussion|Limitations|Conclusion|References|Appendix)\b/
@@ -49,7 +75,7 @@ export async function parseUploadedPdfFile(file: File): Promise<DocumentSource> 
     }
 
     const fullText = fullTextParts.join('\n\n');
-    if (fullText.trim().length < 50) {
+    if (fullText.trim().length < 20) {
       throw new Error('Could not extract text layer from the PDF (please check if it is a scanned image PDF).');
     }
 

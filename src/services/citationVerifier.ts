@@ -269,23 +269,52 @@ export function mineGroundedSentencesFromDocument(doc: DocumentSource): Extracte
     const fallbackSentences = doc.fullText
       .split(/(?<=[.!?])\s+|\n+/)
       .map((s) => s.trim())
-      .filter((s) => s.length >= 30 && s.length <= 210)
+      .filter((s) => !s.startsWith('[Page ') && s.length >= 20 && s.length <= 240)
       .slice(0, 8);
 
     fallbackSentences.forEach((sent, idx) => {
       const pat = patterns[idx % patterns.length];
-      results.push({
-        quote: sent,
-        location: doc.sections[0]
-          ? `${doc.sections[0].heading} (${doc.sections[0].pageOrFile})`
-          : 'Main Manuscript',
-        category: pat.category,
-        suggestedAttackTitle: pat.attackTitle,
-        suggestedKoreanTitle: pat.koreanTitle,
-        suggestedReviewerDialogue: pat.dialogueBuilder(sent),
-        suggestedEvidenceCardTitle: pat.cardTitle,
-      });
+      if (!results.some((r) => r.quote === sent)) {
+        results.push({
+          quote: sent,
+          location: doc.sections[idx % Math.max(1, doc.sections.length)]
+            ? `${doc.sections[idx % doc.sections.length].heading} (${doc.sections[idx % doc.sections.length].pageOrFile})`
+            : 'Main Manuscript',
+          category: pat.category,
+          suggestedAttackTitle: pat.attackTitle,
+          suggestedKoreanTitle: pat.koreanTitle,
+          suggestedReviewerDialogue: pat.dialogueBuilder(sent),
+          suggestedEvidenceCardTitle: pat.cardTitle,
+        });
+      }
     });
+  }
+
+  // Ultimate guarantee for slide decks / table-only PDFs with long lines and no periods
+  if (results.length < 4) {
+    const sourceContent = doc.sections[0]?.content || doc.fullText;
+    const chunkLen = Math.min(120, Math.max(20, Math.floor(sourceContent.length / 4)));
+    for (let i = 0; i < 4 && results.length < 4; i++) {
+      const start = Math.min(
+        Math.max(0, sourceContent.length - chunkLen),
+        i * chunkLen
+      );
+      const rawSlice = sourceContent.slice(start, start + chunkLen).trim();
+      if (rawSlice.length >= 12) {
+        const pat = patterns[i % patterns.length];
+        results.push({
+          quote: rawSlice,
+          location: doc.sections[0]
+            ? `${doc.sections[0].heading} (${doc.sections[0].pageOrFile})`
+            : 'Main Manuscript (Page 1)',
+          category: pat.category,
+          suggestedAttackTitle: pat.attackTitle,
+          suggestedKoreanTitle: pat.koreanTitle,
+          suggestedReviewerDialogue: pat.dialogueBuilder(rawSlice),
+          suggestedEvidenceCardTitle: pat.cardTitle,
+        });
+      }
+    }
   }
 
   return results;

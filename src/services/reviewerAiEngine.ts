@@ -38,8 +38,11 @@ const ALLIED_CATEGORY: Record<WeaknessCategory, WeaknessCategory> = {
   NOVELTY: 'SCOPE',
 };
 
-export const DEFAULT_GEMINI_API_KEY =
+const rawEnvKey =
   (import.meta as { env?: Record<string, string> }).env?.VITE_GEMINI_API_KEY || '';
+export const DEFAULT_GEMINI_API_KEY = rawEnvKey.trim().startsWith('AIza')
+  ? rawEnvKey.trim()
+  : '';
 
 const cachedBatchByDocId = new Map<string, GeneratedAttackBatch>();
 
@@ -48,6 +51,11 @@ async function callArgonOrGeminiJson(
   apiKey: string,
   temperature = 0.35
 ): Promise<string | null> {
+  const trimmedKey = apiKey.trim();
+  if (!trimmedKey.startsWith('AIza')) {
+    return null;
+  }
+
   const modelsToTry = [
     'models/gemini-2.5-flash',
     'models/gemini-flash-latest',
@@ -257,6 +265,40 @@ ${doc.fullText.slice(0, 450000)}`;
     });
     discardedCountBeforeValid = 0;
   });
+
+  if (verifiedIntents.length === 0) {
+    const emergencyQuote = (
+      doc.sections[0]?.content ||
+      doc.fullText ||
+      doc.title
+    )
+      .slice(0, 120)
+      .trim();
+    verifiedIntents.push({
+      id: `intent_emergency_${Date.now()}`,
+      title: 'Experimental Rigor & Baseline Critique',
+      koreanTitle: 'Experimental Rigor & Baseline Critique',
+      reviewerDialogue:
+        '"Where is the rigorous empirical comparison and statistical validation for this claim in your manuscript?!"',
+      verbatimQuote: emergencyQuote,
+      quoteLocation: doc.sections[0]
+        ? `${doc.sections[0].heading} (${doc.sections[0].pageOrFile})`
+        : 'Main Manuscript (Page 1)',
+      weaknessCategory: 'BASELINE',
+      acceptedCategories: ['BASELINE', 'REPRODUCIBILITY'],
+      damage: 24,
+      startingBossBlock: 22,
+      counterHint:
+        'Cite [BASELINE] or [REPRODUCIBILITY] evidence from your manuscript or submit a detailed empirical rebuttal!',
+      verification: {
+        verified: true,
+        matchType: 'EXACT_SUBSTRING',
+        matchScore: 1.0,
+        charOffset: 0,
+        discardedCountBeforeValid: 0,
+      },
+    });
+  }
 
   const finalBatch: GeneratedAttackBatch = {
     verifiedIntents,

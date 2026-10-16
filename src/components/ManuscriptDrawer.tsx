@@ -71,7 +71,46 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
     if (!isOpen) {
       setSelectedText('');
       setFloatingBtnPos(null);
+      return;
     }
+
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(range.commonAncestorContainer)
+      ) {
+        return;
+      }
+      let rawText = sel.toString().trim().replace(/\s+/g, ' ');
+      if (rawText.length < 5) {
+        rawText = range.toString().trim().replace(/\s+/g, ' ');
+      }
+      if (rawText.length < 5) return;
+
+      let node: Node | null = range.startContainer;
+      let heading = 'Manuscript Body';
+      let page = 'Uploaded PDF';
+      while (node && node !== containerRef.current) {
+        if (node instanceof HTMLElement && node.dataset.sectionHeading) {
+          heading = node.dataset.sectionHeading;
+          page = node.dataset.sectionPage || 'Uploaded PDF';
+          break;
+        }
+        node = node.parentNode;
+      }
+
+      setSelectedText(rawText);
+      setSelectedHeading(heading);
+      setSelectedLocation(page);
+    };
+
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', onSelectionChange);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -85,7 +124,10 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
       return;
     }
 
-    const rawText = sel.toString().trim().replace(/\s+/g, ' ');
+    let rawText = sel.toString().trim().replace(/\s+/g, ' ');
+    if (rawText.length < 5 && sel.rangeCount > 0) {
+      rawText = sel.getRangeAt(0).toString().trim().replace(/\s+/g, ' ');
+    }
     if (rawText.length < 5) {
       return;
     }
@@ -152,13 +194,13 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-sm select-none">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-sm">
       <div
         ref={containerRef}
         className="relative w-full max-w-2xl bg-[#120e0b] border-l-2 border-[#9a7640] h-full flex flex-col text-[#e8dcc8] shadow-2xl"
       >
         {/* Header */}
-        <div className="p-4 border-b border-[#8a6d3b]/40 flex items-center justify-between bg-[#1a1410] shrink-0">
+        <div className="p-4 border-b border-[#8a6d3b]/40 flex items-center justify-between bg-[#1a1410] shrink-0 select-none">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-5 h-5 text-[#d4a857]" />
             <div>
@@ -179,7 +221,7 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
         </div>
 
         {/* Instruction & Currently Highlighted Quote Banner */}
-        <div className="px-4 py-2.5 bg-[#1c150e] border-b border-[#8a6d3b]/40 text-xs font-serif space-y-1 shrink-0">
+        <div className="px-4 py-2.5 bg-[#1c150e] border-b border-[#8a6d3b]/40 text-xs font-serif space-y-1 shrink-0 select-none">
           {highlightedQuote && (
             <div className="text-[#f0dca8] flex items-start gap-2 leading-relaxed">
               <CheckCircle2 className="w-4 h-4 text-[#d4a857] shrink-0 mt-0.5" />
@@ -227,6 +269,8 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
             return (
               <div
                 key={sec.id}
+                data-section-heading={sec.heading}
+                data-section-page={sec.pageOrFile}
                 onMouseUp={() => handleTextSelection(sec.heading, sec.pageOrFile)}
                 onKeyUp={() => handleTextSelection(sec.heading, sec.pageOrFile)}
                 className={`rounded p-4 border transition ${
@@ -240,11 +284,30 @@ export const ManuscriptDrawer: React.FC<ManuscriptDrawerProps> = ({
                     <FileText className="w-4 h-4 text-[#c89d54]" />
                     {sec.heading}
                   </span>
-                  <span className="text-xs font-mono text-[#c4b08b] px-2 py-0.5 rounded bg-[#0c0907] border border-[#4a3923]">
-                    {sec.pageOrFile}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const excerpt = sec.content.trim().replace(/\s+/g, ' ').slice(0, 220);
+                        setSelectedText(excerpt);
+                        setSelectedLocation(sec.pageOrFile);
+                        setSelectedHeading(sec.heading);
+                        setFloatingBtnPos(null);
+                      }}
+                      className="text-[11px] font-serif text-[#f0dca8] hover:text-white px-2 py-0.5 rounded bg-[#2d2115] hover:bg-[#45321f] border border-[#8a6d3b] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Pin className="w-3 h-3 text-[#d4a857]" />
+                      <span>Select Excerpt</span>
+                    </button>
+                    <span className="text-xs font-mono text-[#c4b08b] px-2 py-0.5 rounded bg-[#0c0907] border border-[#4a3923]">
+                      {sec.pageOrFile}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs md:text-sm text-[#dfd1b8] leading-relaxed whitespace-pre-wrap font-serif cursor-text selection:bg-[#b8862d] selection:text-black">
+                <p
+                  data-manuscript-paragraph="true"
+                  className="text-xs md:text-sm text-[#dfd1b8] leading-relaxed whitespace-pre-wrap font-serif cursor-text select-text selection:bg-[#b8862d] selection:text-black"
+                >
                   {renderHighlightedContent(sec.content)}
                 </p>
               </div>
