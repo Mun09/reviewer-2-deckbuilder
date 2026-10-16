@@ -1,0 +1,32 @@
+{
+  "name": "reviewer-2-deckbuilder",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "build:exe": "powershell -ExecutionPolicy Bypass -File desktop/build-exe.ps1",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/three": "^0.186.0",
+    "canvas-confetti": "^1.9.3",
+    "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^4.8.69",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.1"
+  }
+}

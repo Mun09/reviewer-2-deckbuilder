@@ -1,0 +1,8 @@
+node_modules
+dist
+desktop
+*.exe
+*.mp4
+*.webm
+.git
+.env

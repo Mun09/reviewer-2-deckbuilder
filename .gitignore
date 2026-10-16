@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+*.log
+.DS_Store
+desktop/dist.zip
+Reviewer2.exe
+playwright-report/
+test-results/
